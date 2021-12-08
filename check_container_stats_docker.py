@@ -173,7 +173,7 @@ def get_container_stats(args, docker_env):
 
     container_stats['name'] = output.split(",")[0]
     container_stats['id'] = output.split(",")[1][0:12]
-    container_stats['cpu_perc'] = float(output.split(",")[2].rstrip(u'%'))
+    container_stats['cpu_perc'] = float(output.split(",")[2].rstrip('%'))
     container_stats['mem_used'] = output.split(",")[3].split("/")[0].strip()
     container_stats['mem_used_byte'] = convert_to_bytes(output.split(",")[3].split("/")[0].strip())
     container_stats['mem_total'] = output.split(",")[3].split("/")[1].strip()
