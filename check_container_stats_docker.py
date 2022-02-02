@@ -203,7 +203,7 @@ def convert_to_bytes(inputstr):
         value = round(value * 1000000000)
     elif unit == 'MB':
         value = round(value * 1000000)
-    elif unit == 'KB':
+    elif unit in ['KB', 'kB']:
         value = round(value * 1000)
     elif unit == 'B':
         value = round(value)
@@ -213,6 +213,8 @@ def convert_to_bytes(inputstr):
         value = round(value * 1048576)
     elif unit == 'KiB':
         value = round(value * 1024)
+    else:
+        exit_plugin(3, f'Unknown metric unit in "docker stats" output: {unit}', "")
 
     return int(value)
 
