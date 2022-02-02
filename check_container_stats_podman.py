@@ -168,6 +168,11 @@ def get_container_stats(args, docker_env):
 def convert_to_bytes(inputstr):
     """ converts docker output units to raw bytes """
 
+    if inputstr == "--":
+        # If the container does not bind any ports podman returns "-- / --" as
+        # .NetIO metrics, .BlockIO shows similar behaviour
+        inputstr = '0B'
+
     # Some versions of the "podman" command put a whitespace between value and unit
     # Thus we remove all whitespaces and then separate unit from value
     value = float(findall("[0-9.]+", inputstr.replace(" ", ""))[0])
