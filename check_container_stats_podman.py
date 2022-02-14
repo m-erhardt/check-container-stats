@@ -178,7 +178,9 @@ def convert_to_bytes(inputstr):
     value = float(findall("[0-9.]+", inputstr.replace(" ", ""))[0])
     unit = findall("[a-zA-Z]+", inputstr.replace(" ", ""))[0]
 
-    if unit == 'GB':
+    if unit == 'TB':
+        value = round(value * 1000000000000)
+    elif unit == 'GB':
         value = round(value * 1000000000)
     elif unit == 'MB':
         value = round(value * 1000000)
@@ -186,6 +188,8 @@ def convert_to_bytes(inputstr):
         value = round(value * 1000)
     elif unit == 'B':
         value = round(value)
+    elif unit == 'TiB':
+        value = round(value * 1099511627776)
     elif unit == 'GiB':
         value = round(value * 1073741824)
     elif unit == 'MiB':
