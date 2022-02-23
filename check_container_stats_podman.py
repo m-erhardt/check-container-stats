@@ -18,6 +18,7 @@ import os
 import sys
 import subprocess
 from re import findall, match
+from string import ascii_letters
 from argparse import ArgumentParser
 
 
@@ -175,8 +176,8 @@ def convert_to_bytes(inputstr):
 
     # Some versions of the "podman" command put a whitespace between value and unit
     # Thus we remove all whitespaces and then separate unit from value
-    value = float(findall("[0-9.]+", inputstr.replace(" ", ""))[0])
-    unit = findall("[a-zA-Z]+", inputstr.replace(" ", ""))[0]
+    value = float(inputstr.replace(" ", "").rstrip(ascii_letters))
+    unit = findall(r"\d[a-zA-Z]+$", inputstr.replace(" ", ""))[0].lstrip('01234565789')
 
     if unit == 'TB':
         value = round(value * 1000000000000)
