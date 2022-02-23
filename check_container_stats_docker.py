@@ -17,6 +17,7 @@
 import sys
 import subprocess
 from re import findall, match
+from string import ascii_letters
 from argparse import ArgumentParser
 
 
@@ -196,8 +197,8 @@ def get_container_stats(args, docker_env):
 def convert_to_bytes(inputstr):
     """ converts docker output units to raw bytes """
 
-    value = float(findall("[0-9.]+", inputstr.replace(" ", ""))[0])
-    unit = findall("[a-zA-Z]+", inputstr.replace(" ", ""))[0]
+    value = float(inputstr.replace(" ", "").rstrip(ascii_letters))
+    unit = findall(r"\d[a-zA-Z]+$", inputstr.replace(" ", ""))[0].lstrip('01234565789')
 
     if unit == 'TB':
         value = round(value * 1000000000000)
