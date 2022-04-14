@@ -24,10 +24,8 @@ from argparse import ArgumentParser
 def get_args():
     """ Parse Arguments """
     parser = ArgumentParser(
-                 description="Icinga/Nagios plugin which statistics of a \
-                              Container",
-                 epilog=""
-             )
+                 description="Icinga/Nagios plugin which checks health and statistics of a \
+                              Container")
     parser.add_argument("-c", "--container", required=True,
                         help="Name of the Container which should be checked",
                         type=str, dest='container_name')
@@ -39,26 +37,28 @@ def get_args():
                               DOCKER_HOST",
                         type=str, dest='socket',
                         default="unix:///var/run/docker.sock")
-    parser.add_argument("--cpuwarn", required=False,
-                        help="warning threshold for CPU usage (in %%)",
-                        type=float, dest='cpuwarn')
-    parser.add_argument("--cpucrit", required=False,
-                        help="critical threshold for CPU usage (in %%)",
-                        type=float, dest='cpucrit')
-    parser.add_argument("--memwarn", required=False,
-                        help="warning threshold for memory usage (in Bytes)",
-                        type=int, dest='memwarn')
-    parser.add_argument("--memcrit", required=False,
-                        help="critical threshold for memory usage (in Bytes)",
-                        type=int, dest='memcrit')
-    parser.add_argument("--pidwarn", required=False,
-                        help="warning threshold for number of processes in container",
-                        type=int, dest='pidwarn')
-    parser.add_argument("--pidcrit", required=False,
-                        help="critical threshold for number of processes in container",
-                        type=int, dest='pidcrit')
     parser.add_argument('--wildcard', dest='wildcard', action='store_true',
                         help="--container is a wildcard, not an exact match")
+    thresholds = parser.add_argument_group('Thresholds')
+    thresholds.add_argument("--cpuwarn", required=False,
+                            help="warning threshold for CPU usage (in %%)",
+                            type=float, dest='cpuwarn')
+    thresholds.add_argument("--cpucrit", required=False,
+                            help="critical threshold for CPU usage (in %%)",
+                            type=float, dest='cpucrit')
+    thresholds.add_argument("--memwarn", required=False,
+                            help="warning threshold for memory usage (in Bytes)",
+                            type=int, dest='memwarn')
+    thresholds.add_argument("--memcrit", required=False,
+                            help="critical threshold for memory usage (in Bytes)",
+                            type=int, dest='memcrit')
+    thresholds.add_argument("--pidwarn", required=False,
+                            help="warning threshold for number of processes in container",
+                            type=int, dest='pidwarn')
+    thresholds.add_argument("--pidcrit", required=False,
+                            help="critical threshold for number of processes in container",
+                            type=int, dest='pidcrit')
+
     args = parser.parse_args()
     return args
 

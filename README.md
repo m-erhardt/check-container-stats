@@ -11,7 +11,7 @@
 
 ### Usage example
 
-```
+```bash
 # default usage
 ./check_container_stats_docker.py -c containername
 OK - containername (b343972b5de9) is Up 3 days - CPU: 8.65%, Memory: 10.62 GiB, PIDs: 304 | cpu=8.65%;;;; pids=304;;;; mem=11403138171B;;;;33565169418 net_send=2570000000B;;;; net_recv=2750000000B;;;; disk_read=1580000000B;;;; disk_write=3760000000B;;;;
@@ -25,14 +25,13 @@ OK - containername (b343972b5de9) is Up 3 days - CPU: 8.65%, Memory: 10.62 GiB, 
 
 ### Usage
 ```
-./check_container_stats_docker.py --help
 usage: check_container_stats_docker.py [-h] -c CONTAINER_NAME [-t TIMEOUT]
-                                       [-s SOCKET] [--cpuwarn CPUWARN]
-                                       [--cpucrit CPUCRIT] [--memwarn MEMWARN]
-                                       [--memcrit MEMCRIT] [--pidwarn PIDWARN]
-                                       [--pidcrit PIDCRIT] [--wildcard]
+                                       [-s SOCKET] [--wildcard]
+                                       [--cpuwarn CPUWARN] [--cpucrit CPUCRIT]
+                                       [--memwarn MEMWARN] [--memcrit MEMCRIT]
+                                       [--pidwarn PIDWARN] [--pidcrit PIDCRIT]
 
-Icinga/Nagios plugin which statistics of a Container
+Icinga/Nagios plugin which checks health and statistics of a Container
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -43,6 +42,9 @@ optional arguments:
   -s SOCKET, --socket SOCKET
                         Path to Docker socket, sets environment variable
                         DOCKER_HOST
+  --wildcard            --container is a wildcard, not an exact match
+
+Thresholds:
   --cpuwarn CPUWARN     warning threshold for CPU usage (in %)
   --cpucrit CPUCRIT     critical threshold for CPU usage (in %)
   --memwarn MEMWARN     warning threshold for memory usage (in Bytes)
@@ -50,7 +52,6 @@ optional arguments:
   --pidwarn PIDWARN     warning threshold for number of processes in container
   --pidcrit PIDCRIT     critical threshold for number of processes in
                         container
-  --wildcard            --container is a wildcard, not an exact match
 ```
 
 ![Icinga2 service check](img/check_container_stats_1.png?raw=true "Icinga2 service check")
