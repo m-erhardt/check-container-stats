@@ -235,6 +235,8 @@ def main():
     # determine return code
     returncode = 0
 
+    if "(unhealthy)" in container_ps['state']:
+        returncode = 1
     if args.cpucrit is not None and args.cpucrit < container_stats['cpu_perc']:
         returncode = 2
     if args.cpuwarn is not None and args.cpuwarn < container_stats['cpu_perc'] and returncode != 2:
