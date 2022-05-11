@@ -76,10 +76,10 @@ def get_container_pslist(args, docker_env):
     """ execute docker ps"""
 
     # Execute "docker ps" command
-    result = subprocess.run((f'podman ps -a -f name=^{args.container_name}$ '
-                             f'--format "{{{{.Names}}}},{{{{.Status}}}},{{{{.Size}}}},'
-                             f'{{{{.RunningFor}}}}"'),
-                            shell=True,
+    result = subprocess.run(['podman', 'ps', '-a', '-f', f'name=^{args.container_name}$',
+                             '--format', '"{{.Names}},{{.Status}},{{.Size}},{{.RunningFor}}"',
+                             '--size'],
+                            shell=False,
                             check=False,
                             env=docker_env,
                             stdout=subprocess.PIPE,
@@ -115,10 +115,10 @@ def get_container_stats(args, docker_env):
     """ execute docker stat"""
 
     # Execute "docker stats" command
-    result = subprocess.run((f'podman stats {args.container_name} --no-stream '
-                             f'--format "{{{{.Name}}}},{{{{.ID}}}},{{{{.CPUPerc}}}},'
-                             f'{{{{.MemUsage}}}},{{{{.NetIO}}}},{{{{.BlockIO}}}},{{{{.PIDs}}}}"'),
-                            shell=True,
+    result = subprocess.run(['podman', 'stats', args.container_name, '--no-stream', '--format',
+                             '"{{.Name}},{{.ID}},{{.CPUPerc}},{{.MemUsage}},\
+                               {{.NetIO}},{{.BlockIO}},{{.PIDs}}"'],
+                            shell=False,
                             check=False,
                             env=docker_env,
                             stdout=subprocess.PIPE,
@@ -141,7 +141,7 @@ def get_container_stats(args, docker_env):
                        'pids': 0}
 
     # Extract first line from output
-    output = result.stdout.decode().split("\n")[0]
+    output = result.stdout.decode().split("\n")[0].strip("\"")
 
     container_stats['name'] = output.split(",")[0]
     container_stats['id'] = output.split(",")[1][0:12]
