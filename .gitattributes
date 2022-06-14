@@ -1,0 +1,9 @@
+# Exclude files from archives
+.gitignore        export-ignore
+.gitattributes    export-ignore
+.github           export-ignore
+
+.pylintrc         export-ignore
+
+img               export-ignore
+tests             export-ignore
