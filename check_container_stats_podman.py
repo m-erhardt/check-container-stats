@@ -15,6 +15,7 @@
 """
 
 import os
+import shlex
 import sys
 import subprocess
 from re import findall, match
@@ -30,6 +31,10 @@ def get_args():
     parser.add_argument("-c", "--container", required=True,
                         help="Name of the Container which should be checked",
                         type=str, dest='container_name')
+    parser.add_argument("-u", "--user", required=False,
+                        help="User for rootless containers, default: root",
+                        default='root',
+                        type=str, dest='user')
     parser.add_argument("-t", "--timeout", required=False,
                         help="timeout in seconds", type=int, dest='timeout',
                         default=10)
@@ -76,9 +81,14 @@ def get_container_pslist(args, docker_env):
     """ execute docker ps"""
 
     # Execute "docker ps" command
-    result = subprocess.run(['podman', 'ps', '-a', '-f', f'name=^{args.container_name}$',
-                             '--format', '"{{.Names}},{{.Status}},{{.Size}},{{.RunningFor}}"',
-                             '--size'],
+    # pylint: disable=consider-using-f-string
+    result = subprocess.run(shlex.split('/usr/bin/systemd-run --machine=%s@'
+                                        ' --quiet --user --collect --pipe --wait'
+                                        ' podman ps'
+                                        ' -a -f name=^%s$'
+                                        ' --format'
+                                        ' "{{.Names}},{{.Status}},{{.Size}},{{.RunningFor}}"'
+                                        ' --size' % (args.user, args.container_name)),
                             shell=False,
                             check=False,
                             env=docker_env,
@@ -115,9 +125,16 @@ def get_container_stats(args, docker_env):
     """ execute docker stat"""
 
     # Execute "docker stats" command
-    result = subprocess.run(['podman', 'stats', args.container_name, '--no-stream', '--format',
-                             '"{{.Name}},{{.ID}},{{.CPUPerc}},{{.MemUsage}},\
-                               {{.NetIO}},{{.BlockIO}},{{.PIDs}}"'],
+    # pylint: disable=consider-using-f-string
+    result = subprocess.run(shlex.split('/usr/bin/systemd-run --machine=%s@'
+                                        ' --quiet --user --collect --pipe --wait'
+                                        ' podman stats'
+                                        ' %s'
+                                        ' --no-stream'
+                                        ' --format'
+                                        ' "{{.Name}},{{.ID}},{{.CPUPerc}},{{.MemUsage}},'
+                                        '{{.NetIO}},{{.BlockIO}},{{.PIDs}}"'
+                                        % (args.user, args.container_name)),
                             shell=False,
                             check=False,
                             env=docker_env,
