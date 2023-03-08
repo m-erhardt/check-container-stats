@@ -78,9 +78,9 @@ def exit_plugin(returncode, output, perfdata):
 
 
 def get_container_pslist(args, docker_env):
-    """ execute docker ps"""
+    """ execute podman ps"""
 
-    # Execute "docker ps" command
+    # Execute "podman ps" command
     # pylint: disable=consider-using-f-string
     result = subprocess.run(shlex.split('/usr/bin/systemd-run --machine=%s@'
                                         ' --quiet --user --collect --pipe --wait'
@@ -122,9 +122,9 @@ def get_container_pslist(args, docker_env):
 
 
 def get_container_stats(args, docker_env):
-    """ execute docker stat"""
+    """ execute podman stats"""
 
-    # Execute "docker stats" command
+    # Execute "podman stats" command
     # pylint: disable=consider-using-f-string
     result = subprocess.run(shlex.split('/usr/bin/systemd-run --machine=%s@'
                                         ' --quiet --user --collect --pipe --wait'
