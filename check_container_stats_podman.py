@@ -15,6 +15,7 @@
 """
 
 import os
+from shlex import split
 import sys
 import subprocess
 from re import findall, match
@@ -25,11 +26,15 @@ from argparse import ArgumentParser
 def get_args():
     """ Parse Arguments """
     parser = ArgumentParser(
-                 description="Icinga/Nagios plugin which checks health and statistics of a \
+        description="Icinga/Nagios plugin which checks health and statistics of a \
                               Container")
     parser.add_argument("-c", "--container", required=True,
                         help="Name of the Container which should be checked",
                         type=str, dest='container_name')
+    parser.add_argument("-u", "--user", required=False,
+                        help="User for rootless containers, default: root",
+                        default='root',
+                        type=str, dest='user')
     parser.add_argument("-t", "--timeout", required=False,
                         help="timeout in seconds", type=int, dest='timeout',
                         default=10)
@@ -72,22 +77,24 @@ def exit_plugin(returncode, output, perfdata):
         sys.exit(0)
 
 
-def get_container_pslist(args, docker_env):
-    """ execute docker ps"""
+def get_container_pslist(args, podman_env):
+    """ execute podman ps"""
 
-    # Execute "docker ps" command
-    result = subprocess.run(['podman', 'ps', '-a', '-f', f'name=^{args.container_name}$',
-                             '--format', '"{{.Names}},{{.Status}},{{.Size}},{{.RunningFor}}"',
-                             '--size'],
-                            shell=False,
-                            check=False,
-                            env=docker_env,
-                            stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE)
+    # Execute "podman ps" command
+    result = subprocess.run(
+        split((f'su - {args.user} /bin/bash -c "podman ps -a'
+               f' -f name=^{args.container_name}$ --format'
+               ' {{.Names}},{{.Status}},{{.Size}},{{.RunningFor}}'
+               ' --size"')),
+        shell=False,
+        check=False,
+        env=podman_env,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE)
 
     # Check if command exited without error code
     if result.returncode != 0:
-        exit_plugin(3, f'docker stats command returned error: {result.stderr}', '')
+        exit_plugin(3, f'podman ps command returned error: {result.stderr}', '')
 
     # Check if the command returned any putput
     elif len(result.stdout.decode()) == 0:
@@ -111,26 +118,28 @@ def get_container_pslist(args, docker_env):
     return container_ps
 
 
-def get_container_stats(args, docker_env):
-    """ execute docker stat"""
+def get_container_stats(args, podman_env):
+    """ execute podman stats"""
 
-    # Execute "docker stats" command
-    result = subprocess.run(['podman', 'stats', args.container_name, '--no-stream', '--format',
-                             '"{{.Name}},{{.ID}},{{.CPUPerc}},{{.MemUsage}},\
-                               {{.NetIO}},{{.BlockIO}},{{.PIDs}}"'],
-                            shell=False,
-                            check=False,
-                            env=docker_env,
-                            stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE)
+    # Execute "podman stats" command
+    result = subprocess.run(
+        split((f'su - {args.user} /bin/bash -c "'
+               f' podman stats {args.container_name} --no-stream --format'
+               ' {{.Name}},{{.ID}},{{.CPUPerc}},{{.MemUsage}},'
+               ' {{.NetIO}},{{.BlockIO}},{{.PIDs}}"')),
+        shell=False,
+        check=False,
+        env=podman_env,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE)
 
     # Check if command exited without error code
     if result.returncode != 0:
-        exit_plugin(3, f'docker stats command returned error: {result.stderr}', '')
+        exit_plugin(3, f'podman stats command returned error: {result.stderr}', '')
 
     # Check if the command returned any putput
     elif len(result.stdout.decode()) == 0:
-        exit_plugin(2, (f'docker stats did not return any output for '
+        exit_plugin(2, (f'podman stats did not return any output for '
                         f'Container {args.container_name}'), '')
 
     # Initialize return object
@@ -166,7 +175,7 @@ def get_container_stats(args, docker_env):
 
 
 def convert_to_bytes(inputstr):
-    """ converts docker output units to raw bytes """
+    """ converts podman output units to raw bytes """
 
     if inputstr == "--":
         # If the container does not bind any ports podman returns "-- / --" as
@@ -208,12 +217,12 @@ def main():
     # Get Arguments
     args = get_args()
 
-    # environment variables for "docker" command
-    docker_env = os.environ
+    # environment variables for "podman" command
+    podman_env = os.environ
 
-    # Execute "docker ps" and "docker stats"
-    container_ps = get_container_pslist(args, docker_env)
-    container_stats = get_container_stats(args, docker_env)
+    # Execute "podman ps" and "podman stats"
+    container_ps = get_container_pslist(args, podman_env)
+    container_stats = get_container_stats(args, podman_env)
 
     # Construct perfdata and output
     output = (f"{container_stats['name']} ({container_stats['id']}) is {container_ps['state']} - "
@@ -238,16 +247,18 @@ def main():
         returncode = 1
     if args.cpucrit is not None and args.cpucrit < container_stats['cpu_perc']:
         returncode = 2
-    if args.cpuwarn is not None and args.cpuwarn < container_stats['cpu_perc'] and returncode != 2:
+    if (args.cpuwarn is not None and args.cpuwarn < container_stats['cpu_perc']
+        and returncode != 2):
         returncode = 1
     if args.memcrit is not None and args.memcrit < container_stats['mem_used_byte']:
         returncode = 2
-    if args.memwarn is not None and args.memwarn < container_stats['mem_used_byte'] \
-       and returncode != 2:
+    if (args.memwarn is not None and args.memwarn < container_stats['mem_used_byte']
+        and returncode != 2):
         returncode = 1
     if args.pidcrit is not None and args.pidcrit < container_stats['pids']:
         returncode = 2
-    if args.pidwarn is not None and args.pidwarn < container_stats['pids'] and returncode != 2:
+    if (args.pidwarn is not None and args.pidwarn < container_stats['pids']
+        and returncode != 2):
         returncode = 1
 
     exit_plugin(returncode, output, perfdata)
