@@ -1,2 +1,5 @@
 [MESSAGES CONTROL]
 disable=duplicate-code
+
+[tool.pylint.format]
+max-line-length = 120

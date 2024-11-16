@@ -4,6 +4,3 @@
 .github           export-ignore
 
 .pylintrc         export-ignore
-
-img               export-ignore
-tests             export-ignore
