@@ -102,7 +102,7 @@ def send_socket_cmd(cmd: str, socketfile: str) -> str:
         exit_plugin(3, f'Socket file { socketfile } not found!', "")
     except PermissionError:
         exit_plugin(3, f'Access to socket file { socketfile } denied!', "")
-    except TimeoutError:
+    except (TimeoutError, socket.timeout):
         exit_plugin(3, f'Connection to socket { socketfile } timed out!', "")
     except ConnectionError as err:
         exit_plugin(3, f'Error during socket connection: { err }', "")
@@ -231,6 +231,9 @@ def convert_bytes_to_pretty(raw_bytes: int):
         output = f'{ round(raw_bytes / 1024, 2) }KiB'
     elif raw_bytes < 1024:
         output = f'{ raw_bytes }B'
+    else:
+        # Theoretically impossible, prevent pylint possibly-used-before-assignment
+        raise ValueError('Impossible value in convert_bytes_to_pretty()')
     return output
 
 

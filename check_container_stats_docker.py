@@ -176,9 +176,7 @@ def send_socket_cmd(cmd: str, socketfile: str) -> str:
         exit_plugin(3, f'Socket file { socketfile } not found!', "")
     except PermissionError:
         exit_plugin(3, f'Access to socket file { socketfile } denied!', "")
-    except TimeoutError:
-        exit_plugin(3, f'Connection to socket { socketfile } timed out!', "")
-    except socket.timeout:
+    except (TimeoutError, socket.timeout):
         exit_plugin(3, f'Connection to socket { socketfile } timed out!', "")
     except ConnectionError as err:
         exit_plugin(3, f'Error during socket connection: { err }', "")
