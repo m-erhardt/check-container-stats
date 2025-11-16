@@ -89,9 +89,9 @@ def send_http_get(
 ) -> dict:
     """ Prepare HTTP post reqest to be sent to docker socket, evluate HTTP response """
 
-    cmd: str = (f'GET { endpoint } HTTP/1.1\r\n'
-                f'Host: { host }\r\n'
-                f'User-Agent: { useragent }\r\n'
+    cmd: str = (f'GET {endpoint} HTTP/1.1\r\n'
+                f'Host: {host}\r\n'
+                f'User-Agent: {useragent}\r\n'
                 f'Accept: application/json\r\n'
                 f'Connection: close\r\n\r\n')
 
@@ -122,9 +122,9 @@ def send_http_get(
     response["http_response"]: dict = json.loads(buf_lines[-1])
 
     if response["http_status"] != 200:
-        exit_plugin(2, (f'Daemon API v{ response["http_header_api-version"] } returned HTTP '
-                        f'{ response["http_status"] } while fetching { endpoint }: '
-                        f'{ response["http_response"] }'), '')
+        exit_plugin(2, (f'Daemon API v{response["http_header_api-version"]} returned HTTP '
+                        f'{response["http_status"]} while fetching {endpoint}: '
+                        f'{response["http_response"]}'), '')
 
     return response
 
@@ -179,13 +179,13 @@ def send_socket_cmd(cmd: str, socketfile: str) -> str:
         sock.close()
 
     except FileNotFoundError:
-        exit_plugin(3, f'Socket file { socketfile } not found!', "")
+        exit_plugin(3, f'Socket file {socketfile} not found!', "")
     except PermissionError:
-        exit_plugin(3, f'Access to socket file { socketfile } denied!', "")
+        exit_plugin(3, f'Access to socket file {socketfile} denied!', "")
     except (TimeoutError, socket.timeout):
-        exit_plugin(3, f'Connection to socket { socketfile } timed out!', "")
+        exit_plugin(3, f'Connection to socket {socketfile} timed out!', "")
     except ConnectionError as err:
-        exit_plugin(3, f'Error during socket connection: { err }', "")
+        exit_plugin(3, f'Error during socket connection: {err}', "")
 
     return buf
 
@@ -244,15 +244,15 @@ def set_state(newstate: int, state: int) -> int:
 def convert_bytes_to_pretty(raw_bytes: int) -> str:
     """ converts raw bytes into human readable output """
     if raw_bytes >= 1099511627776:
-        output = f'{ round(raw_bytes / 1024 **4, 2) }TiB'
+        output = f'{round(raw_bytes / 1024 **4, 2)}TiB'
     elif raw_bytes >= 1073741824:
-        output = f'{ round(raw_bytes / 1024 **3, 2) }GiB'
+        output = f'{round(raw_bytes / 1024 **3, 2)}GiB'
     elif raw_bytes >= 1048576:
-        output = f'{ round(raw_bytes / 1024 **2, 2) }MiB'
+        output = f'{round(raw_bytes / 1024 **2, 2)}MiB'
     elif raw_bytes >= 1024:
-        output = f'{ round(raw_bytes / 1024, 2) }KiB'
+        output = f'{round(raw_bytes / 1024, 2)}KiB'
     elif raw_bytes < 1024:
-        output = f'{ raw_bytes }B'
+        output = f'{raw_bytes}B'
     else:
         # Theoretically impossible, prevent pylint possibly-used-before-assignment
         raise ValueError('Impossible value in convert_bytes_to_pretty()')
@@ -264,14 +264,14 @@ def get_container_from_name(args: Arguments) -> dict:
 
     # Query all containers that match the given name from /containers/json
     containers: dict = send_http_get(
-        f'/v1.51/containers/json?all=true&filters={{"name":["{ args.container_name }"]}}',
+        f'/v1.51/containers/json?all=true&filters={{"name":["{args.container_name}"]}}',
         socketfile=args.socket
     )
 
     if len(containers["http_response"]) == 0:
-        exit_plugin(2, f'No container matched name { args.container_name }', '')
+        exit_plugin(2, f'No container matched name {args.container_name}', '')
     elif args.wildcard is True and len(containers["http_response"]) > 1:
-        exit_plugin(2, f'Multiple containers matched wildcard name { args.container_name }', '')
+        exit_plugin(2, f'Multiple containers matched wildcard name {args.container_name}', '')
 
     if args.wildcard is True:
         # We previously checked than wildcard name matched only one container - so this must be it
@@ -279,10 +279,10 @@ def get_container_from_name(args: Arguments) -> dict:
     else:
         # loop over returned containers and check for match
         for cnt in containers["http_response"]:
-            if f'/{ args.container_name }' in cnt["Names"]:
+            if f'/{args.container_name}' in cnt["Names"]:
                 container_info: dict = cnt
         if 'container_info' not in locals():
-            exit_plugin(2, f'No container matched name { args.container_name }', '')
+            exit_plugin(2, f'No container matched name {args.container_name}', '')
 
     return container_info
 
@@ -295,13 +295,13 @@ def calc_container_metrics(info: dict, stats: dict) -> dict:
 
     try:
         # Extract container name and id from api response
-        container.update({"name": f'{ info["Names"][0][1:] }'})
-        container.update({"id": f'{ info["Id"][:12] }'})
-        container.update({"id_long": f'{ info["Id"] }'})
+        container.update({"name": f'{info["Names"][0][1:]}'})
+        container.update({"id": f'{info["Id"][:12]}'})
+        container.update({"id_long": f'{ info["Id"]}'})
 
         # Get container state
-        container.update({"state": f'{ info["State"] }'})
-        container.update({"status": f'{ info["Status"] }'})
+        container.update({"state": f'{info["State"]}'})
+        container.update({"status": f'{info["Status"]}'})
 
         # Get process statistics
         container.update({"pid_count": stats["pids_stats"].get("current", 0)})
@@ -359,7 +359,7 @@ def calc_container_metrics(info: dict, stats: dict) -> dict:
         container.update({"blk_io": {"r": blkio_r, "w": blkio_w}})
 
     except KeyError as err:
-        exit_plugin(2, f'Error while extracting values from JSON response: { err }', "")
+        exit_plugin(2, f'Error while extracting values from JSON response: {err}', "")
 
     return container
 
@@ -377,7 +377,7 @@ def main():
     if tuple(server_version["MinAPIVersion"].split('.')) >= ("1", "51"):
         exit_plugin(2, (f'This plugin requires a docker daemon supporting API version 1.51 - '
                         f'Minimum supported version of this docker daemon is '
-                        f'{ server_version["MinAPIVersion"] }'), '')
+                        f'{server_version["MinAPIVersion"]}'), '')
 
     # Get container id for name from /containers/json
     # Returns Container JSON object as dict
@@ -385,11 +385,11 @@ def main():
 
     # Check if container is running, if not we can exit early without perfdata
     if container_info["State"] != "running":
-        exit_plugin(2, f'Container { container_info["Names"][0][1:] } is { container_info["Status"] }', '')
+        exit_plugin(2, f'Container {container_info["Names"][0][1:]} is {container_info["Status"]}', '')
 
     # Get container stats
     container_stats: dict = send_http_get(
-            f'/v1.51/containers/{ container_info["Id"] }/stats?stream=false&one-shot=false',
+            f'/v1.51/containers/{container_info["Id"]}/stats?stream=false&one-shot=false',
             socketfile=args.socket
     )["http_response"]
 
@@ -397,21 +397,21 @@ def main():
     container: dict = calc_container_metrics(container_info, container_stats)
 
     # Construct perfdata and output
-    output = (f"{ container['name'] } ({ container['id'] }) is { container['status'] } - "
-              f"CPU: { container['cpu_pct'] }%, "
-              f"Memory: { convert_bytes_to_pretty(container['memory']['used']) }, "
+    output = (f"{container['name']} ({container['id']}) is {container['status']} - "
+              f"CPU: {container['cpu_pct']}%, "
+              f"Memory: {convert_bytes_to_pretty(container['memory']['used'])}, "
               f"PIDs: {container['pid_count']}")
 
-    perfdata = (f" | cpu={ container['cpu_pct'] }%;{ args.cpuwarn or '' };"
-                f"{ args.cpucrit or '' };; "
-                f"pids={ container['pid_count'] };{ args.pidwarn or '' };"
-                f"{ args.pidcrit or '' };0;{ container['pid_limit'] } "
+    perfdata = (f" | cpu={container['cpu_pct']}%;{args.cpuwarn or '' };"
+                f"{args.cpucrit or ''};; "
+                f"pids={container['pid_count']};{args.pidwarn or ''};"
+                f"{args.pidcrit or ''};0;{container['pid_limit']} "
                 f"mem={container['memory']['used']}B;{args.memwarn or ''};"
-                f"{args.memcrit or ''};0;{ container['memory']['available'] } "
-                f"net_send={ container['net_io']['tx'] }B;;;; "
-                f"net_recv={ container['net_io']['rx'] }B;;;; "
-                f"disk_read={ container['blk_io']['r'] }B;;;; "
-                f"disk_write={ container['blk_io']['w'] }B;;;; ")
+                f"{args.memcrit or ''};0;{container['memory']['available']} "
+                f"net_send={container['net_io']['tx']}B;;;; "
+                f"net_recv={container['net_io']['rx']}B;;;; "
+                f"disk_read={container['blk_io']['r']}B;;;; "
+                f"disk_write={container['blk_io']['w']}B;;;; ")
 
     # Set initial return code
     returncode = 0
