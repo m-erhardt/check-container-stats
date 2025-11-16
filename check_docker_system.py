@@ -93,7 +93,13 @@ def send_socket_cmd(cmd: str, socketfile: str) -> str:
                 buf += data.decode()
 
         # Shut down sending
-        sock.shutdown(socket.SHUT_WR)
+        try:
+            sock.shutdown(socket.SHUT_WR)
+        except OSError:
+            # catch "OSError: [Errno 57] Socket is not connected" on MacOS
+            # Apparently Docker on MacOS shuts down the socket connection at this point already due to our
+            # "Connection: close" header
+            pass
 
         # Close socket connection
         sock.close()
