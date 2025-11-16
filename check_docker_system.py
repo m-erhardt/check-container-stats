@@ -222,11 +222,11 @@ def parse_docker_sysinfo(docker_sysinfo: dict) -> dict:
 def convert_bytes_to_pretty(raw_bytes: int):
     """ converts raw bytes into human readable output """
     if raw_bytes >= 1099511627776:
-        output = f'{round(raw_bytes / 1024 **4, 2)}TiB'
+        output = f'{round(raw_bytes / 1024 ** 4, 2)}TiB'
     elif raw_bytes >= 1073741824:
-        output = f'{round(raw_bytes / 1024 **3, 2)}GiB'
+        output = f'{round(raw_bytes / 1024 ** 3, 2)}GiB'
     elif raw_bytes >= 1048576:
-        output = f'{round(raw_bytes / 1024 **2, 2)}MiB'
+        output = f'{round(raw_bytes / 1024 ** 2, 2)}MiB'
     elif raw_bytes >= 1024:
         output = f'{round(raw_bytes / 1024, 2)}KiB'
     elif raw_bytes < 1024:
@@ -327,10 +327,10 @@ def main():
         f'\'containers_running\'={engine_state["containers"]["running"]};;;0;'
         f'{engine_state["containers"]["total"]} '
         f'\'containers_paused\'={engine_state["containers"]["paused"]};{args.maxpaused or ""};;0;'
-        f'{engine_state["containers"]["total"] } '
+        f'{engine_state["containers"]["total"]} '
         f'\'containers_stopped\'={engine_state["containers"]["stopped"]};{args.maxstopped or ""};;0;'
         f'{engine_state["containers"]["total"]} '
-        f'\'images\'={engine_state["images"]};{ args.maximages or ""};;0; '
+        f'\'images\'={engine_state["images"]};{args.maximages or ""};;0; '
         f'\'volumes\'={volcount};{args.maxvolumes or ""};;0;'
     )
 

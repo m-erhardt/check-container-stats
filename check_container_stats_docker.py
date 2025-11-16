@@ -244,11 +244,11 @@ def set_state(newstate: int, state: int) -> int:
 def convert_bytes_to_pretty(raw_bytes: int) -> str:
     """ converts raw bytes into human readable output """
     if raw_bytes >= 1099511627776:
-        output = f'{round(raw_bytes / 1024 **4, 2)}TiB'
+        output = f'{round(raw_bytes / 1024 ** 4, 2)}TiB'
     elif raw_bytes >= 1073741824:
-        output = f'{round(raw_bytes / 1024 **3, 2)}GiB'
+        output = f'{round(raw_bytes / 1024 ** 3, 2)}GiB'
     elif raw_bytes >= 1048576:
-        output = f'{round(raw_bytes / 1024 **2, 2)}MiB'
+        output = f'{round(raw_bytes / 1024 ** 2, 2)}MiB'
     elif raw_bytes >= 1024:
         output = f'{round(raw_bytes / 1024, 2)}KiB'
     elif raw_bytes < 1024:
@@ -297,7 +297,7 @@ def calc_container_metrics(info: dict, stats: dict) -> dict:
         # Extract container name and id from api response
         container.update({"name": f'{info["Names"][0][1:]}'})
         container.update({"id": f'{info["Id"][:12]}'})
-        container.update({"id_long": f'{ info["Id"]}'})
+        container.update({"id_long": f'{info["Id"]}'})
 
         # Get container state
         container.update({"state": f'{info["State"]}'})
@@ -402,7 +402,7 @@ def main():
               f"Memory: {convert_bytes_to_pretty(container['memory']['used'])}, "
               f"PIDs: {container['pid_count']}")
 
-    perfdata = (f" | cpu={container['cpu_pct']}%;{args.cpuwarn or '' };"
+    perfdata = (f" | cpu={container['cpu_pct']}%;{args.cpuwarn or ''};"
                 f"{args.cpucrit or ''};; "
                 f"pids={container['pid_count']};{args.pidwarn or ''};"
                 f"{args.pidcrit or ''};0;{container['pid_limit']} "
