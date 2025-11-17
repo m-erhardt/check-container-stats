@@ -93,19 +93,25 @@ def send_socket_cmd(cmd: str, socketfile: str) -> str:
                 buf += data.decode()
 
         # Shut down sending
-        sock.shutdown(socket.SHUT_WR)
+        try:
+            sock.shutdown(socket.SHUT_WR)
+        except OSError:
+            # catch "OSError: [Errno 57] Socket is not connected" on MacOS
+            # Apparently Docker on MacOS shuts down the socket connection at this point already due to our
+            # "Connection: close" header
+            pass
 
         # Close socket connection
         sock.close()
 
     except FileNotFoundError:
-        exit_plugin(3, f'Socket file { socketfile } not found!', "")
+        exit_plugin(3, f'Socket file {socketfile} not found!', "")
     except PermissionError:
-        exit_plugin(3, f'Access to socket file { socketfile } denied!', "")
+        exit_plugin(3, f'Access to socket file {socketfile} denied!', "")
     except (TimeoutError, socket.timeout):
-        exit_plugin(3, f'Connection to socket { socketfile } timed out!', "")
+        exit_plugin(3, f'Connection to socket {socketfile} timed out!', "")
     except ConnectionError as err:
-        exit_plugin(3, f'Error during socket connection: { err }', "")
+        exit_plugin(3, f'Error during socket connection: {err}', "")
 
     return buf
 
@@ -150,9 +156,9 @@ async def send_http_get(
         host: str = 'localhost', useragent: str = 'check_docker_system.py') -> dict:
     """ Prepare HTTP post reqest to be sent to docker socket """
 
-    cmd: str = (f'GET { endpoint } HTTP/1.1\r\n'
-                f'Host: { host }\r\n'
-                f'User-Agent: { useragent }\r\n'
+    cmd: str = (f'GET {endpoint} HTTP/1.1\r\n'
+                f'Host: {host}\r\n'
+                f'User-Agent: {useragent}\r\n'
                 f'Accept: application/json\r\n'
                 f'Connection: close\r\n\r\n')
 
@@ -222,15 +228,15 @@ def parse_docker_sysinfo(docker_sysinfo: dict) -> dict:
 def convert_bytes_to_pretty(raw_bytes: int):
     """ converts raw bytes into human readable output """
     if raw_bytes >= 1099511627776:
-        output = f'{ round(raw_bytes / 1024 **4, 2) }TiB'
+        output = f'{round(raw_bytes / 1024 ** 4, 2)}TiB'
     elif raw_bytes >= 1073741824:
-        output = f'{ round(raw_bytes / 1024 **3, 2) }GiB'
+        output = f'{round(raw_bytes / 1024 ** 3, 2)}GiB'
     elif raw_bytes >= 1048576:
-        output = f'{ round(raw_bytes / 1024 **2, 2) }MiB'
+        output = f'{round(raw_bytes / 1024 ** 2, 2)}MiB'
     elif raw_bytes >= 1024:
-        output = f'{ round(raw_bytes / 1024, 2) }KiB'
+        output = f'{round(raw_bytes / 1024, 2)}KiB'
     elif raw_bytes < 1024:
-        output = f'{ raw_bytes }B'
+        output = f'{raw_bytes}B'
     else:
         # Theoretically impossible, prevent pylint possibly-used-before-assignment
         raise ValueError('Impossible value in convert_bytes_to_pretty()')
@@ -283,9 +289,9 @@ def main():
 
     # Check HTTP response code
     if state["http_status"] not in [200]:
-        exit_plugin(3, f'Docker socket returned HTTP { state["http_status"] }: { state["http_response"] }', '')
+        exit_plugin(3, f'Docker socket returned HTTP {state["http_status"]}: {state["http_response"]}', '')
     elif volumes["http_status"] not in [200]:
-        exit_plugin(3, f'Docker socket returned HTTP { volumes["http_status"] }: { volumes["http_response"] }', '')
+        exit_plugin(3, f'Docker socket returned HTTP {volumes["http_status"]}: {volumes["http_response"]}', '')
 
     if args.debug is True:
         print(json.dumps(state, indent=4))
@@ -296,7 +302,7 @@ def main():
         docker_sysinfo: dict = json.loads(state["http_response"])
         docker_volinfo: dict = json.loads(volumes["http_response"])
     except json.decoder.JSONDecodeError as err:
-        exit_plugin(3, f'Unable to parse valid JSON from docker daemon response: { err }', '')
+        exit_plugin(3, f'Unable to parse valid JSON from docker daemon response: {err}', '')
 
     engine_state = parse_docker_sysinfo(docker_sysinfo)
     volcount: int = len(docker_volinfo["Volumes"])
@@ -316,22 +322,22 @@ def main():
         state = set_state(1, state)
 
     output = (
-        f'Containers: { engine_state["containers"]["total"] } '
-        f'(Running: { engine_state["containers"]["running"] }, Paused: { engine_state["containers"]["paused"] }, '
-        f'Stopped: { engine_state["containers"]["stopped"] }), Images: { engine_state["images"] }, '
-        f'Volumes: { volcount }, '
-        f'Docker version { engine_state["server_version"] } running with '
-        f'{ engine_state["cpus"] } CPUs and { convert_bytes_to_pretty(engine_state["memory"]) } memory'
+        f'Containers: {engine_state["containers"]["total"]} '
+        f'(Running: {engine_state["containers"]["running"]}, Paused: {engine_state["containers"]["paused"]}, '
+        f'Stopped: {engine_state["containers"]["stopped"]}), Images: {engine_state["images"]}, '
+        f'Volumes: {volcount}, '
+        f'Docker version {engine_state["server_version"]} running with '
+        f'{engine_state["cpus"]} CPUs and {convert_bytes_to_pretty(engine_state["memory"])} memory'
     )
     perfdata = (
-        f'\'containers_running\'={ engine_state["containers"]["running"] };;;0;'
-        f'{ engine_state["containers"]["total"] } '
-        f'\'containers_paused\'={ engine_state["containers"]["paused"] };{ args.maxpaused or "" };;0;'
-        f'{ engine_state["containers"]["total"] } '
-        f'\'containers_stopped\'={ engine_state["containers"]["stopped"] };{ args.maxstopped or "" };;0;'
-        f'{ engine_state["containers"]["total"] } '
-        f'\'images\'={ engine_state["images"] };{ args.maximages or "" };;0; '
-        f'\'volumes\'={ volcount };{ args.maxvolumes or "" };;0;'
+        f'\'containers_running\'={engine_state["containers"]["running"]};;;0;'
+        f'{engine_state["containers"]["total"]} '
+        f'\'containers_paused\'={engine_state["containers"]["paused"]};{args.maxpaused or ""};;0;'
+        f'{engine_state["containers"]["total"]} '
+        f'\'containers_stopped\'={engine_state["containers"]["stopped"]};{args.maxstopped or ""};;0;'
+        f'{engine_state["containers"]["total"]} '
+        f'\'images\'={engine_state["images"]};{args.maximages or ""};;0; '
+        f'\'volumes\'={volcount};{args.maxvolumes or ""};;0;'
     )
 
     exit_plugin(state, output, perfdata)
