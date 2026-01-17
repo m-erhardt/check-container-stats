@@ -15,6 +15,7 @@
 
 import sys
 import socket
+import signal
 import time
 import json
 from re import match
@@ -65,6 +66,15 @@ def get_args() -> Arguments:
         args.socket = args.socket[7:]
 
     return args
+
+
+def handle_sigalrm(signum, frame):  # pylint: disable=unused-argument
+    """
+    Icinga/Nagios/Nrpe send the process control signal SIGALRM when the
+    configured plugin timeout is reached.
+    This function terminates the plugin gracefully.
+    """
+    exit_plugin(3, 'Plugin timeout reached - terminating...', '')
 
 
 def exit_plugin(returncode, output, perfdata):
@@ -369,6 +379,13 @@ def main():
 
     # Get Arguments
     args = get_args()
+
+    # Terminate gracefully when receiving SIGALRM
+    # (triggered by Icinga/Nagios/Nrpe when configured timeout is reached)
+    signal.signal(signal.SIGALRM, handle_sigalrm)
+
+    # Trigger SIGALRM after configured timeout is reached
+    signal.alarm(args.timeout)
 
     # Get daemon API version
     server_version: dict = send_http_get('/version', socketfile=args.socket)["http_response"]
