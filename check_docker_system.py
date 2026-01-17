@@ -14,6 +14,7 @@
 
 import sys
 import socket
+import signal
 import time
 import json
 import asyncio
@@ -32,6 +33,11 @@ def get_args() -> Arguments:
 
     parser.add_argument(
         '--debug', dest='debug', action='store_true', help="Print debug information", default=False
+    )
+
+    parser.add_argument(
+        "-t", "--timeout", required=False, help="Plugin timeout in seconds", type=int,
+        dest='timeout', default=10
     )
 
     thresh = parser.add_argument_group('Thresholds')
@@ -53,6 +59,15 @@ def get_args() -> Arguments:
 
     args = parser.parse_args()
     return args
+
+
+def handle_sigalrm(signum, frame):  # pylint: disable=unused-argument
+    """
+    Icinga/Nagios/Nrpe send the process control signal SIGALRM when the
+    configured plugin timeout is reached.
+    This function terminates the plugin gracefully.
+    """
+    exit_plugin(3, 'Plugin timeout reached - terminating...', '')
 
 
 def send_socket_cmd(cmd: str, socketfile: str) -> str:
@@ -274,18 +289,22 @@ def exit_plugin(returncode: int, output: str, perfdata: str):
         sys.exit(0)
 
 
-def main():
+async def main():
     """ Main program code """
 
     args: Arguments = get_args()
 
+    # Terminate gracefully when receiving SIGALRM
+    # (triggered by Icinga/Nagios/Nrpe when configured timeout is reached)
+    signal.signal(signal.SIGALRM, handle_sigalrm)
+    # Trigger SIGALRM after configured timeout is reached
+    signal.alarm(args.timeout)
+
     # Get /info and /volumes from Docker socket
-    loop = asyncio.get_event_loop()
-    state, volumes = loop.run_until_complete(asyncio.gather(
+    state, volumes = await asyncio.gather(
         send_http_get('/info', socketfile=args.socket),
         send_http_get('/volumes', socketfile=args.socket),
-    ))
-    loop.close()
+    )
 
     # Check HTTP response code
     if state["http_status"] not in [200]:
@@ -344,4 +363,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
