@@ -363,4 +363,12 @@ async def main():
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    if sys.version_info >= (3, 7):
+        asyncio.run(main())
+    else:
+        # Retain backward compatibility with Python 3.6 as this is still the default Python version
+        # on EL8 platforms
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        loop.run_until_complete(main())
+        loop.close()
