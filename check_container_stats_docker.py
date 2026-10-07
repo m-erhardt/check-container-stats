@@ -352,7 +352,7 @@ def calc_container_metrics(info: dict, stats: dict) -> dict:
         network_rx_bytes: int = 0
         network_tx_bytes: int = 0
         if container["state"] == "running":
-            for network in stats["networks"].keys():
+            for network in stats.get("networks", {}).keys():
                 network_rx_bytes += stats["networks"][network]["rx_bytes"]
                 network_tx_bytes += stats["networks"][network]["tx_bytes"]
         container.update({"net_io": {"rx": network_rx_bytes, "tx": network_tx_bytes}})
