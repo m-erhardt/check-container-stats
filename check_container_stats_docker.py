@@ -274,7 +274,7 @@ def get_container_from_name(args: Arguments) -> dict:
 
     # Query all containers that match the given name from /containers/json
     containers: dict = send_http_get(
-        f'/v1.51/containers/json?all=true&filters={{"name":["{args.container_name}"]}}',
+        f'/v1.55/containers/json?all=true&filters={{"name":["{args.container_name}"]}}',
         socketfile=args.socket
     )
 
@@ -390,9 +390,9 @@ def main():
     # Get daemon API version
     server_version: dict = send_http_get('/version', socketfile=args.socket)["http_response"]
 
-    # Check of daemon is compatible with API v1.51
-    if tuple(server_version["MinAPIVersion"].split('.')) >= ("1", "51"):
-        exit_plugin(2, (f'This plugin requires a docker daemon supporting API version 1.51 - '
+    # Check of daemon is compatible with API v1.55
+    if tuple(server_version["MinAPIVersion"].split('.')) >= ("1", "55"):
+        exit_plugin(2, (f'This plugin requires a docker daemon supporting API version 1.55 - '
                         f'Minimum supported version of this docker daemon is '
                         f'{server_version["MinAPIVersion"]}'), '')
 
@@ -406,7 +406,7 @@ def main():
 
     # Get container stats
     container_stats: dict = send_http_get(
-            f'/v1.51/containers/{container_info["Id"]}/stats?stream=false&one-shot=false',
+            f'/v1.55/containers/{container_info["Id"]}/stats?stream=false&one-shot=false',
             socketfile=args.socket
     )["http_response"]
 
